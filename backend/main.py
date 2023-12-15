@@ -1,108 +1,66 @@
-from fastapi.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
-from fastapi import FastAPI, HTTPException, Depends, Request
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
-from urllib.parse import quote_plus
-from pydantic import BaseModel
-from typing import List
-from datetime import datetime, timedelta
 import secrets
+from flask_cors import CORS
+from pymongo import MongoClient
+from flask_jwt_extended import JWTManager
+from flask import Flask, jsonify, request, make_response
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from werkzeug.security import generate_password_hash
+from datetime import timedelta
 
-app = FastAPI()
-
-# 配置CORS中间件，允许跨域请求
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = Flask(__name__)
+CORS(app, resources={r'/*': {'origins': '*'}})
+app.config['JWT_SECRET_KEY'] = secrets.token_urlsafe(32)
+jwt = JWTManager(app)
 
 # MongoDB 配置
-username = "liubox98"
-password = "abc123!@"
-cluster_url = "cluster0.h41guuq.mongodb.net"
-database_name = "hamburger"
+client = MongoClient(f"mongodb+srv://liubo:abc123!@cluster1.cbbd34h.mongodb.net/hamburger?retryWrites=true&w=majority")
+mongo_db = client.get_database()
 
-uri = f"mongodb+srv://{quote_plus(username)}:{quote_plus(password)}@{cluster_url}/{database_name}?retryWrites=true&w=majority"
+# 模型
+class User:
+    def __init__(self, username, password):
+        self.username = username
+        self.password = generate_password_hash(password, method='sha256')
 
-# MongoDB连接
-client = AsyncIOMotorClient(uri)
-db = client[database_name]
-user_collection = db['user']
-action_collection = db['activities']
+class Action:
+    def __init__(self, action, description):
+        self.action = action
+        self.description = description
 
-
-# 用于签名令牌的密钥
-SECRET_KEY = secrets.token_urlsafe(32)
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-class User(BaseModel):
-    username: str
-    password: str
-
-class Action(BaseModel):
-    action: str
-    description:str
-
-async def get_user(username: str):
-    return await user_collection.find_one({"username": username})
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-async def create_jwt_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=401,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    user = await get_user(username)
-    if user is None:
-        raise credentials_exception
-    return user
-
-@app.post("/token")
-async def login_for_access_token(request: Request):
-    data = await request.json()
-    username = data.get("username")
-    password = data.get("password")
-
-    user = await user_collection.find_one({"username": username, "password": password})
+# 路由
+@app.route('/token', methods=['POST'])
+def login_for_access_token():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    user = mongo_db.user.find_one({'username': username})
     if user:
-        access_token = await create_jwt_token({"sub": username})
-        return {"access_token": access_token, "token_type": "bearer"}
-    return
-
-@app.get("/users/me", response_model=User)
-async def read_users_me(current_user: User = Depends(get_current_user)):
-    return current_user
+        if password == user.get('password', ''):
+            access_token = create_access_token(identity=username, expires_delta=timedelta(minutes=30))
+            return jsonify({'access_token': access_token, 'token_type': 'bearer'})
+    return make_response(jsonify({'error': 'Invalid username or password'}), 401)
 
 
-@app.post("/activities/", status_code=201)
-async def create_activity(activity: Action):
-    await action_collection.insert_one(
-        {"action": activity.action, "description": activity.description}
-    )
+@app.route('/users/me', methods=['GET'])
+@jwt_required()
+def read_users_me():
+    current_user = get_jwt_identity()
+    user = mongo_db.user.find_one({'username': current_user}, {'_id': False, 'password': False})
+    return jsonify(user)
 
-@app.get("/activities/", response_model=List[Action])
-async def read_activities():
-    activities = await action_collection.find({}).to_list(None)
-    return activities
+@app.route('/activities', methods=['POST'])
+@jwt_required()
+def create_activity():
+    data = request.json
+    activity = Action(**data)
+    mongo_db.activities.insert_one({'action': activity.action, 'description': activity.description})
+    return jsonify({'message': 'Activity created successfully'}), 201
 
+@app.route('/activities', methods=['GET'])
+@jwt_required()
+def read_activities():
+    activities = mongo_db.activities.find({}, {'_id': False})
+    return jsonify(list(activities))
 
+if __name__ == '__main__':
+    app.run(host='10.10.20.24', port=8000)
