@@ -5,7 +5,6 @@ const initialState = {
     user: null,
 };
 
-// 从本地存储获取值，如果没有则使用初始状态
 const storedIsAuthenticated = localStorage.getItem('isAuthenticated');
 const storedUser = JSON.parse(localStorage.getItem('user'));
 
@@ -26,25 +25,16 @@ export default {
     },
     actions: {
         async login({ commit }, credentials) {
-            try {
-                const response = await axios.post('/token', credentials);
-
-                if (response && response.data && response.data.access_token) {
-                    const user = parseUserFromResponse(response.data);
-                    commit('setAuthentication', true);
-                    commit('setUser', user);
-
-                    // 保存到本地存储
-                    localStorage.setItem('isAuthenticated', true);
-                    localStorage.setItem('user', JSON.stringify(user));
-
-                    return { success: true, user };
-                } else {
-                    throw new Error('Invalid response format');
-                }
-            } catch (error) {
-                console.error('Login failed:', error);
-                throw error;
+            const response = await axios.post('/token', credentials);
+            if (response && response.data && response.data.access_token) {
+                const user = parseUserFromResponse(response.data);
+                commit('setAuthentication', true);
+                commit('setUser', user);
+                localStorage.setItem('isAuthenticated', true);
+                localStorage.setItem('user', JSON.stringify(user));
+                return { success: true, user };
+            } else {
+                return false
             }
         },
     },
@@ -55,6 +45,5 @@ export default {
 };
 
 function parseUserFromResponse(responseData) {
-    // 解析用户信息的逻辑
     return responseData.user || null;
 }

@@ -87,7 +87,7 @@ async def login_for_access_token(request: Request):
     if user:
         access_token = await create_jwt_token({"sub": username})
         return {"access_token": access_token, "token_type": "bearer"}
-    raise HTTPException(status_code=401, detail="Unauthorized")
+    return
 
 @app.get("/users/me", response_model=User)
 async def read_users_me(current_user: User = Depends(get_current_user)):

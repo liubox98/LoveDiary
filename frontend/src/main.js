@@ -4,13 +4,13 @@ import router from './router';
 import store from './store';
 import axios from './plugins/axios';
 
-import Vant from 'vant';
-import 'vant/lib/index.css';
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
 
 const app = createApp(App);
 app.config.globalProperties.$axios = axios;
 
 app.use(router);
 app.use(store);
-app.use(Vant);
+app.use(ElementPlus);
 app.mount('#app');
