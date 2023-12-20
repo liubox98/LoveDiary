@@ -35,10 +35,8 @@ export default {
         this.loading = true;
         await this.$refs.loginForm.validate();
         const response = await this.$store.dispatch('login', this.loginData);
-        console.log('response', response)
         if (response && response.success) {
           this.$router.push('/ActivitiesList');
-          this.$message.success('Login successful.');
         } else {
           this.$message.error('Invalid username or password.');
         }
@@ -87,4 +85,5 @@ export default {
 
 .login-button {
   text-align: center;
-}</style>
+}
+</style>

@@ -32,7 +32,6 @@ export default {
         async login({ commit }, credentials) {
             try {
                 const response = await axios.post('/token', credentials);
-                console.log('response:::', response);
                 if (response && response.data && response.data.access_token) {
                     const user = parseUserFromResponse(response.data);
                     commit('setAuthentication', true);
