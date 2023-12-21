@@ -1,11 +1,10 @@
 import secrets
+from datetime import timedelta
 from flask_cors import CORS
 from pymongo import MongoClient
-from flask_jwt_extended import JWTManager
 from werkzeug.security import generate_password_hash
 from flask import Flask, jsonify, request, make_response
-from flask_jwt_extended import create_access_token, jwt_required
-from datetime import timedelta
+from flask_jwt_extended import JWTManager, create_access_token
 
 app = Flask(__name__)
 CORS(app, resources={r'/*': {'origins': '*'}})
@@ -34,6 +33,7 @@ class Action:
 @app.route('/token', methods=['POST'])
 def login_for_access_token():
     data = request.json
+    print('data', data)
     username = data.get('username')
     password = data.get('password')
     user = mongo_db.user.find_one({'username': username})
@@ -45,34 +45,14 @@ def login_for_access_token():
 
 @app.route('/activities', methods=['POST'])
 def create_activity():
-    author = request.json.get('author')
-    action = request.json.get('action')
-    description = request.json.get('description')
-    time = request.json.get('time')
-    images = request.json.get('image')
-    image_urls = []
-    for image in images:
-        # 将图片数据保存到服务器，这里假设使用了静态目录下的 upload 文件夹
-        # 你可能需要根据具体情况修改保存路径
-        save_path = f"static/upload/{image['name']}"
-        with open(save_path, 'wb') as f:
-            f.write(image['url'])
-        image_urls.append(save_path)
-    activity = Action(author=author, action=action, description=description, time=time, image=image_urls)
-    mongo_db.activities.insert_one({
-        'author': activity.author,
-        'action': activity.action,
-        'description': activity.description,
-        'time': activity.time,
-        'image': activity.image
-    })
+    data = request.json
+    mongo_db.activities.insert_one(data)
     return jsonify({'message': 'Activity created successfully'}), 201
 
 @app.route('/activities', methods=['GET'])
-# @jwt_required()
 def read_activities():
     activities = mongo_db.activities.find({}, {'_id': False})
     return jsonify(list(activities))
 
 if __name__ == '__main__':
-    app.run(host='10.10.20.24', port=8000, debug=True)
+    app.run(host='0.0.0.0',port=8000, debug=True)

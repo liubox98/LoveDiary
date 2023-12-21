@@ -16,7 +16,7 @@
                         <Edit />
                     </el-icon>新增事件</el-button></el-divider>
             <br />
-            <el-dialog v-model="formDialogVisible" title="Add" :width="widthVariable">
+            <el-dialog v-model="formDialogVisible" title="Add" :width="awidthVariable">
                 <el-form :model="activity" ref="activityForm" label-width="auto">
                     <el-form-item label="活动:" prop="action"
                         :rules="[{ required: true, message: '请输入活动', trigger: 'blur' }]">
@@ -51,7 +51,9 @@
                         </el-upload>
                     </el-form-item>
                     <el-form-item>
-                        <el-button type="primary" @click="submitActivity" :loading="submitting">添加</el-button>
+                        <el-button type="primary" @click="submitActivity" :loading="submitting"> 添加<el-icon>
+                                <Promotion />
+                            </el-icon></el-button>
                     </el-form-item>
                 </el-form>
             </el-dialog>
@@ -60,25 +62,21 @@
                 <img w-full :src="dialogImageUrl" alt="Preview Image" />
             </el-dialog>
 
-            <el-dialog v-model="dialogFormVisible" title="Details">
-                <el-form :model="selectedActivity" label-width="auto">
-                    <el-form-item>
-                        <el-carousel height="150px">
-                            <el-carousel-item v-for="item in selectedActivity.image" :key="item.url">
-                                <img :src="item.url" alt="carousel-item" style="width: 100%;" />
-                            </el-carousel-item>
-                        </el-carousel>
-                    </el-form-item>
-                    <el-form-item>
-                        <el-input v-model="selectedActivity.action" disabled />
-                    </el-form-item>
-                    <el-form-item>
-                        <el-input v-model="selectedActivity.description" disabled />
-                    </el-form-item>
-                    <el-form-item>
+            <el-dialog v-model="dialogFormVisible" title="Details" :width="dwidthVariable">
+                <div>
+                    <el-carousel :interval="5000" arrow="always">
+                        <el-carousel-item v-for="imageData in selectedActivity.image" :key="imageData">
+                            <el-image :src="getImageUrl(imageData)" alt="" style="width: 100%; height: 100%"
+                                fit="contain"></el-image>
+                        </el-carousel-item>
+                    </el-carousel>
+
+                    <div class="info">
+                        <p><b>{{ selectedActivity.action }}</b></p>
+                        <p><b>{{ selectedActivity.description }}</b></p>
                         <el-tag class="ml-2" type="success">{{ formattedCurrentDate(selectedActivity.time) }}</el-tag>
-                    </el-form-item>
-                </el-form>
+                    </div>
+                </div>
             </el-dialog>
 
             <el-row>
@@ -107,8 +105,9 @@
 export default {
     data() {
         return {
-            widthVariable: '33%',
-            activity: { action: '', description: '', time: new Date().toISOString() },
+            awidthVariable: '33%',
+            dwidthVariable: '30%',
+            activity: { action: '', description: '', time: new Date().toISOString(), image: [] },
             activities: [],
             startTime: new Date('2023-11-01T00:00:00').getTime(),
             elapsedTime: 0,
@@ -139,38 +138,32 @@ export default {
     },
     methods: {
         async fetchActivities() {
-            try {
-                this.activities = (await this.$axios.get('/activities')).data;
-            } catch (error) {
-                console.error('Error fetching activities:', error);
-            }
+            this.activities = (await this.$axios.get('/activities')).data;
         },
         async submitActivity() {
-            if (this.activity.action.length == 0) {
+            if (this.activity.action.length === 0) {
                 return;
             }
             try {
                 this.submitting = true;
-                this.activity.author = this.$store.getters.currentUser
-                this.activity.image = this.selectedFiles.map(file => ({
-                    name: file.name,
-                    url: file.url,
+                this.activity.author = this.$store.getters.currentUser;
+                this.activity.image = await Promise.all(this.selectedFiles.map(async file => {
+                    const base64Data = await this.convertFileToBase64(file.raw);
+                    return base64Data
                 }));
                 await this.$axios.post('/activities', this.activity);
                 this.fetchActivities();
                 this.clearForm();
-            } catch (error) {
-                console.error('Error submitting activity:', error);
             } finally {
                 this.submitting = false;
             }
         },
-        async blobToDataURL(blob) {
+        convertFileToBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
             });
         },
         clearForm() {
@@ -211,9 +204,11 @@ export default {
             ).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
         },
         showActivityDetails(activity) {
-            console.log('activity:', activity)
             this.selectedActivity = activity;
             this.dialogFormVisible = true;
+        },
+        getImageUrl(imageData) {
+            return `data:image/jpeg;base64,${imageData}`;
         },
     },
     mounted() {
