@@ -4,7 +4,7 @@ from datetime import timedelta
 from flask_cors import CORS
 from pymongo import MongoClient
 from werkzeug.security import generate_password_hash
-from flask import Flask,send_from_directory, jsonify, request, make_response
+from flask import Flask, redirect, send_from_directory, jsonify, request, make_response
 from flask_jwt_extended import JWTManager, create_access_token
 
 app = Flask(__name__)
@@ -31,6 +31,10 @@ class Action:
         self.image = image
 
 # 路由
+@app.route('/')
+def index():
+    return redirect('/dist/index.html')
+
 @app.route('/token', methods=['POST'])
 def login_for_access_token():
     data = request.json
