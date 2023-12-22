@@ -12,7 +12,7 @@ app.config['JWT_SECRET_KEY'] = secrets.token_urlsafe(32)
 jwt = JWTManager(app)
 
 # MongoDB 配置
-client = MongoClient(f"mongodb+srv://liubo:abc123!@cluster1.cbbd34h.mongodb.net/hamburger?retryWrites=true&w=majority")
+client = MongoClient(f"mongodb+srv://liubo:abc123!@cluster1.cbbd34h.mongodb.net/hamburger?retryWrites=true&w=majority", connect=False)
 mongo_db = client.get_database()
 
 # 模型
