@@ -18,7 +18,7 @@ const routes = [
 ];
 
 const router = createRouter({
-    history: createWebHistory('/dist/'), // 设置正确的 base 路径
+    history: createWebHistory('/dist/'),
     routes,
 });
 

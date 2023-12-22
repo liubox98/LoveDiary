@@ -60,6 +60,11 @@ def read_activities():
 def serve_static(filename):
     root_dir = os.path.dirname(os.getcwd())
     return send_from_directory(os.path.join(root_dir, 'frontend', 'dist'), filename)
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all(path):
+    root_dir = os.path.dirname(os.getcwd())
+    return send_from_directory(os.path.join(root_dir, 'frontend', 'dist'), 'index.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
