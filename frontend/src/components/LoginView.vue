@@ -38,7 +38,7 @@ export default {
         if (response && response.success) {
           this.$router.push('/ActivitiesList');
         } else {
-          this.$message.error('Invalid username or password.');
+          this.$message.error('检查用户名或密码');
         }
       } catch (error) {
         this.$message.warning('An error occurred.');
@@ -51,14 +51,11 @@ export default {
 </script>
 
 <style scoped>
-/* 使用 Bootstrap 的容器样式 */
 .container {
   width: 100%;
   max-width: 100vw;
   padding: 0 20px;
-  /* 添加一些水平间距 */
   box-sizing: border-box;
-  /* 防止 padding 影响宽度 */
   margin: 0 auto;
 }
 
@@ -72,9 +69,7 @@ export default {
 
 .logo {
   width: 80%;
-  /* 使用百分比宽度，响应式设计 */
   max-width: 100px;
-  /* 设置一个最大宽度 */
   height: auto;
 }
 
