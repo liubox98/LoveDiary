@@ -1,9 +1,10 @@
+import os
 import secrets
 from datetime import timedelta
 from flask_cors import CORS
 from pymongo import MongoClient
 from werkzeug.security import generate_password_hash
-from flask import Flask, jsonify, request, make_response
+from flask import Flask,send_from_directory, jsonify, request, make_response
 from flask_jwt_extended import JWTManager, create_access_token
 
 app = Flask(__name__)
@@ -53,6 +54,12 @@ def create_activity():
 def read_activities():
     activities = mongo_db.activities.find({}, {'_id': False})
     return jsonify(list(activities))
+
+# 配置静态文件目录
+@app.route('/dist/<path:filename>')
+def serve_static(filename):
+    root_dir = os.path.dirname(os.getcwd())
+    return send_from_directory(os.path.join(root_dir, 'frontend', 'dist'), filename)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')

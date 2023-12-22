@@ -18,10 +18,9 @@ const routes = [
 ];
 
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHistory('/dist/'), // 设置正确的 base 路径
     routes,
 });
-
 
 router.beforeEach(async (to, from, next) => {
     const isAuthenticated = store.getters['isAuthenticated'];
