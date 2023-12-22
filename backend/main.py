@@ -1,4 +1,3 @@
-import os
 import secrets
 from datetime import timedelta
 from flask_cors import CORS
@@ -31,10 +30,6 @@ class Action:
         self.image = image
 
 # 路由
-@app.route('/')
-def index():
-    return redirect('/dist/index.html')
-
 @app.route('/token', methods=['POST'])
 def login_for_access_token():
     data = request.json
@@ -58,17 +53,6 @@ def create_activity():
 def read_activities():
     activities = mongo_db.activities.find({}, {'_id': False})
     return jsonify(list(activities))
-
-# 配置静态文件目录
-@app.route('/dist/<path:filename>')
-def serve_static(filename):
-    root_dir = os.path.dirname(os.getcwd())
-    return send_from_directory(os.path.join(root_dir, 'frontend', 'dist'), filename)
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def catch_all(path):
-    root_dir = os.path.dirname(os.getcwd())
-    return send_from_directory(os.path.join(root_dir, 'frontend', 'dist'), 'index.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
