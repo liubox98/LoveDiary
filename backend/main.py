@@ -57,6 +57,3 @@ def read_activities():
     print('activities -- GET')
     activities = mongo_db.activities.find({}, {'_id': False})
     return jsonify(list(activities))
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0')
