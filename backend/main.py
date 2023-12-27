@@ -13,7 +13,7 @@ jwt = JWTManager(app)
 
 # MongoDB 配置
 # client = MongoClient(f"mongodb+srv://liubo:abc123!@cluster1.cbbd34h.mongodb.net/hamburger?retryWrites=true&w=majority") # mongodb云数数据库
-client = MongoClient("mongodb://root:123456@127.0.0.1:27017/hamburger?authSource=admin&retryWrites=true&w=majority")
+client = MongoClient("mongodb://root:123456@47.100.41.212:27017/hamburger?authSource=admin&retryWrites=true&w=majority", connect=False)
 mongo_db = client.get_database()
 
 # 模型
