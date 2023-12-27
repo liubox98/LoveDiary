@@ -8,12 +8,13 @@ const routes = [
         path: '/',
         name: 'LoginView',
         component: LoginView,
+        meta: { title: 'Login -NOTE' }
     },
     {
         path: '/ActivitiesList',
         name: 'ActivitiesList',
         component: ActivitiesList,
-        meta: { requiresAuth: true },
+        meta: { title: 'Index -NOTE', requiresAuth: true },
     },
 ];
 
@@ -23,7 +24,11 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
+
+    // 设置页面标题
+    document.title = to.meta.title || 'Default Title';
     const isAuthenticated = store.getters['isAuthenticated'];
+
     if (to.meta.requiresAuth && !isAuthenticated) {
         next('/');
     } else {

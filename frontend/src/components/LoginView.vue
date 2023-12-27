@@ -2,7 +2,7 @@
   <div class="container">
     <div class="login-container">
       <img src="@/assets/logo.png" alt="Logo" class="logo" />
-      <h2>Login</h2>
+      <br>
       <el-form :model="loginData" ref="loginForm" class="login-form">
         <el-form-item prop="username">
           <el-input v-model="loginData.username" placeholder="Username" />
