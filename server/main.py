@@ -42,18 +42,15 @@ def login_for_access_token():
             access_token = create_access_token(identity=username, expires_delta=timedelta(minutes=30))
             print('user:', username, 'access_token:', access_token)
             return jsonify({'user': username, 'access_token': access_token })
-    print('user:', user)
     return make_response(jsonify({'error': 'Invalid username or password'}), 401)
 
 @app.route('/activities', methods=['POST'])
 def create_activity():
-    print('activities -- POST',)
     data = request.json
     mongo_db.activities.insert_one(data)
     return jsonify({'message': 'Activity created successfully'}), 201
 
 @app.route('/activities', methods=['GET'])
 def read_activities():
-    print('activities -- GET')
     activities = mongo_db.activities.find({}, {'_id': False})
     return jsonify(list(activities))
